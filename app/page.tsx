@@ -2,12 +2,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Repo={name:string;html_url:string;description:string|null;language:string|null;stargazers_count:number};
-const site={"title": "AI Systems Command Center", "kind": "Command", "description": "Monitor the systems behind Harman Hanjra\u2019s AI, automation, and research work.", "tabs": ["All", "Agent Operating System", "Improver Agent", "Scalecraft", "Quant Research"], "items": ["Agent Operating System", "Improver Agent", "Scalecraft", "Quant Research"]};
+const site={"title": "AI Systems Command Center", "kind": "Command", "description": "Monitor the systems behind Harman Hanjra’s AI, automation, and research work.", "tabs": ["All", "Agent Operating System", "Improver Agent", "Scalecraft", "Quant Research"], "items": ["Agent Operating System", "Improver Agent", "Scalecraft", "Quant Research"]};
 const facts=["Evidence before claims","Responsive by default","Motion with purpose","Human review for risk"];
 
 export default function Home() {
  const [active,setActive]=useState(site.tabs[0]); const [selected,setSelected]=useState<string|null>(null); const [repos,setRepos]=useState<Repo[]>([]); const [reduced,setReduced]=useState(false);
- useEffect(()=>{fetch("https://api.github.com/users/harmanhanjra/repos?sort=updated&per_page=8").then(r=>r.ok?r.json():[]).then(x=>setRepos(x.filter((r:Repo)=>!r.name.toLowerCase().includes("fork")).slice(0,6))).catch(()=>setRepos([]))},[]);
+ useEffect(()=>{const controller=new AbortController();fetch("/api/repos",{signal:controller.signal}).then(r=>r.ok?r.json():{repos:[]}).then((data:{repos?:Repo[]})=>{if(!controller.signal.aborted)setRepos(Array.isArray(data.repos)?data.repos:[])}).catch(()=>{if(!controller.signal.aborted)setRepos([])});return()=>controller.abort()},[]);
  const filtered=useMemo(()=>site.items.filter((x:string)=>active===site.tabs[0]||x.toLowerCase().includes(active.toLowerCase())),[active]);
  return <main className={reduced?"reduced":undefined}>
   <header className="top"><a className="brand" href="#top">HARMAN<span>.</span></a><nav>{site.tabs.map((tab:string)=><button className={active===tab?"active":""} onClick={()=>setActive(tab)} key={tab}>{tab}</button>)}</nav><button className="motion" onClick={()=>setReduced(!reduced)}>{reduced?"Motion off":"Motion on"}</button></header>
